@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Farm Management System</title>
+
+<style>
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:url("https://images.unsplash.com/photo-1500382017468-9049fed747ef");
+  background-size:cover;
+  background-position:center;
+  background-attachment:fixed;
+  color:white;
+}
+
+/* Dark overlay */
+.overlay{
+  background:rgba(0,0,0,0.6);
+  min-height:100vh;
+  padding:30px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+
+/* Header */
+header{
+  text-align:center;
+}
+
+header h1{
+  margin:10px 0;
+  font-size:30px;
+  letter-spacing:1px;
+}
+
+.datetime{
+  font-size:14px;
+  margin-top:5px;
+  color:#a5d6a7;
+}
+
+/* Navigation */
+.nav{
+  text-align:center;
+  margin:30px 0;
+}
+
+.nav button{
+  padding:8px 20px;
+  margin:6px;
+  border:none;
+  border-radius:25px;
+  font-size:14px;
+  cursor:pointer;
+  background:linear-gradient(45deg,#2e7d32,#1b5e20);
+  color:white;
+  transition:0.3s;
+}
+
+.nav button:hover{
+  transform:scale(1.08);
+}
+
+/* Form */
+.form-section{
+  text-align:center;
+}
+
+.form-section h2{
+  margin-bottom:20px;
+}
+
+input{
+  width:260px;
+  padding:12px;
+  margin:10px;
+  border:none;
+  border-radius:6px;
+  font-size:14px;
+}
+
+button.submit{
+  width:280px;
+  padding:10px;
+  border:none;
+  border-radius:6px;
+  background:linear-gradient(45deg,#00c853,#43a047);
+  color:white;
+  font-size:15px;
+  cursor:pointer;
+  transition:0.3s;
+}
+
+button.submit:hover{
+  background:linear-gradient(45deg,#43a047,#2e7d32);
+}
+
+/* Success Message */
+.success{
+  margin-top:15px;
+  color:#00e676;
+  font-weight:bold;
+  display:none;
+}
+
+/* Footer */
+footer{
+  text-align:center;
+  font-size:13px;
+  margin-top:30px;
+  color:#bbdefb;
+}
+</style>
+</head>
+
+<body>
+
+<div class="overlay">
+
+<header>
+<h1>🌿 Cloud Based Farm Management System</h1>
+<div class="datetime" id="datetime"></div>
+</header>
+
+<div class="nav">
+<button onclick="goCrop()">🌾 Crop</button>
+<button onclick="goFertilizer()">🌱 Fertilizer</button>
+<button onclick="goIrrigation()">💧 Irrigation</button>
+<button onclick="goReport()">📊 Report</button>
+</div>
+
+<div class="form-section">
+<h2>👨‍🌾 Farmer Registration</h2>
+
+<input type="text" id="name" placeholder="Farmer Name"><br>
+<input type="text" id="crop" placeholder="Crop Name"><br>
+<input type="text" id="location" placeholder="Location"><br>
+
+<button class="submit" onclick="registerFarmer()">Register Farmer</button>
+
+<div class="success" id="successMsg">
+✔ Farmer Registered Successfully
+</div>
+
+</div>
+
+<footer>
+© 2026 Cloud Based Farm Management System <br>
+Developed by Priya Dharshini
+</footer>
+
+</div>
+
+<script>
+
+// Navigation
+function goCrop(){ window.location.href="crop.html"; }
+function goFertilizer(){ window.location.href="fertilizer.html"; }
+function goIrrigation(){ window.location.href="irrigation.html"; }
+function goReport(){ window.location.href="report.html"; }
+
+// Date & Time
+function updateDateTime(){
+  const now = new Date();
+  document.getElementById("datetime").innerText =
+  now.toLocaleDateString() + " | " + now.toLocaleTimeString();
+}
+setInterval(updateDateTime,1000);
+updateDateTime();
+
+// Register Farmer
+async function registerFarmer(){
+
+const name=document.getElementById("name").value;
+const crop=document.getElementById("crop").value;
+const location=document.getElementById("location").value;
+
+if(!name || !crop || !location){
+alert("All fields required");
+return;
+}
+
+await fetch("http://localhost:5000/register",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({name,crop,location})
+});
+
+document.getElementById("name").value="";
+document.getElementById("crop").value="";
+document.getElementById("location").value="";
+
+const msg=document.getElementById("successMsg");
+msg.style.display="block";
+
+setTimeout(()=>{ msg.style.display="none"; },3000);
+}
+
+</script>
+
+</body>
+</html>

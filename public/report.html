@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Farm Analytics Dashboard - Professional</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:
+  linear-gradient(rgba(0,40,20,0.75),rgba(0,0,40,0.75)),
+  url("https://images.unsplash.com/photo-1500382017468-9049fed747ef");
+  background-size:cover;
+  background-position:center;
+  background-attachment:fixed;
+  color:white;
+}
+.container{width:95%;margin:auto;padding:20px;}
+h1{text-align:center;margin-bottom:20px;letter-spacing:1px;}
+.nav{display:flex;justify-content:space-between;margin-bottom:20px;}
+.nav button{padding:7px 18px;border:none;border-radius:25px;background:linear-gradient(45deg,#2e7d32,#1565c0);color:white;cursor:pointer;font-size:13px;transition:0.3s;}
+.nav button:hover{transform:scale(1.05);}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-bottom:25px;}
+.card{padding:18px;border-radius:18px;text-align:center;backdrop-filter:blur(10px);background:rgba(255,255,255,0.12);box-shadow:0 6px 18px rgba(0,0,0,0.5);}
+.card h3{margin:5px 0;font-size:15px;color:#bbdefb;}
+.card h2{margin:5px 0;font-size:22px;color:#a5d6a7;}
+table{width:100%;border-collapse:collapse;backdrop-filter:blur(8px);background:rgba(255,255,255,0.12);border-radius:15px;overflow:hidden;box-shadow:0 5px 15px rgba(0,0,0,0.5);margin-top:15px;}
+th{background:rgba(0,0,0,0.6);color:#81d4fa;}
+th,td{padding:9px;text-align:center;font-size:14px;}
+tr:nth-child(even){background:rgba(255,255,255,0.07);}
+.delete-btn{background:#e53935;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;}
+.delete-btn:hover{background:#b71c1c;}
+.success-msg{color:#00e676;font-weight:bold;margin:10px 0;text-align:center;display:none;}
+.chart-container{width:360px;margin:30px auto;backdrop-filter:blur(10px);background:rgba(255,255,255,0.12);padding:18px;border-radius:22px;box-shadow:0 6px 20px rgba(0,0,0,0.5);}
+canvas{height:220px !important;}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>🌿 Farm Analytics Dashboard</h1>
+<div class="nav">
+<button onclick="goPrevious()">◀ Back</button>
+<button onclick="goHome()">🏠 Home</button>
+</div>
+
+<div class="cards">
+<div class="card"><h3>Total Crops</h3><h2 id="totalCrops">0</h2></div>
+<div class="card"><h3>Total Fertilizers</h3><h2 id="totalFerts">0</h2></div>
+<div class="card"><h3>Total Irrigation</h3><h2 id="totalIrr">0</h2></div>
+<div class="card"><h3>Total Water Used</h3><h2 id="waterUsed">0 L</h2></div>
+</div>
+
+<div class="success-msg" id="successMsg">✔ Action completed successfully!</div>
+
+<h3 style="color:#90caf9;">📋 Activity Log</h3>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Module</th>
+<th>Action</th>
+<th>Details</th>
+<th>Delete</th>
+</tr>
+</thead>
+<tbody id="activityTable"></tbody>
+</table>
+
+<div class="chart-container">
+<canvas id="reportChart"></canvas>
+</div>
+</div>
+
+<script>
+function goPrevious(){ window.location.href="irrigation.html"; }
+function goHome(){ window.location.href="index.html"; }
+
+let reportChart;
+
+async function loadReport(){
+  try {
+    const [crops, ferts, irr, activity] = await Promise.all([
+      fetch("http://localhost:5000/crops").then(r=>r.json()),
+      fetch("http://localhost:5000/fertilizers").then(r=>r.json()),
+      fetch("http://localhost:5000/irrigations").then(r=>r.json()),
+      fetch("http://localhost:5000/activity").then(r=>r.json())
+    ]);
+
+    document.getElementById("totalCrops").innerText = crops.length;
+    document.getElementById("totalFerts").innerText = ferts.length;
+    document.getElementById("totalIrr").innerText = irr.length;
+
+    let totalWater = irr.reduce((sum,i)=>sum+parseFloat(i.water||0),0);
+    document.getElementById("waterUsed").innerText = totalWater + " L";
+
+    // Activity Table
+    let html = activity.map(a=>`
+      <tr>
+        <td>${a.date}</td>
+        <td>${a.module}</td>
+        <td>${a.action}</td>
+        <td>${a.details}</td>
+        <td><button class='delete-btn' onclick='deleteActivity(${a.id})'>Delete</button></td>
+      </tr>
+    `).join('');
+    document.getElementById("activityTable").innerHTML = html;
+
+    // Chart
+    const ctx = document.getElementById("reportChart").getContext('2d');
+    if(reportChart) reportChart.destroy();
+    reportChart = new Chart(ctx,{
+      type:"doughnut",
+      data:{
+        labels:["Crops","Fertilizers","Irrigation"],
+        datasets:[{ data:[crops.length,ferts.length,irr.length], backgroundColor:["rgba(102,187,106,0.8)","rgba(66,165,245,0.8)","rgba(255,167,38,0.8)"] }]
+      },
+      options:{responsive:true, maintainAspectRatio:false}
+    });
+
+  } catch(err){
+    alert("Error fetching data from server.");
+    console.error(err);
+  }
+}
+
+async function deleteActivity(id){
+  if(confirm("Are you sure to delete this activity?")){
+    try{
+      await fetch(`http://localhost:5000/delete-activity/${id}`, { method:"DELETE" });
+      const msg = document.getElementById("successMsg");
+      msg.style.display = "block";
+      setTimeout(()=>{ msg.style.display = "none"; },2000);
+      loadReport();
+    } catch(err){
+      alert("Error deleting activity.");
+      console.error(err);
+    }
+  }
+}
+
+loadReport();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Crop Management</title>
+<style>
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background: linear-gradient(rgba(0,0,0,0.65),rgba(0,0,0,0.65)),
+              url("https://images.unsplash.com/photo-1500382017468-9049fed747ef");
+  background-size:cover;
+  background-position:center;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.card{
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(15px);
+  width:800px;
+  padding:30px;
+  border-radius:20px;
+  box-shadow:0 15px 40px rgba(0,0,0,0.6);
+  color:white;
+}
+
+h2{
+  text-align:center;
+  margin-bottom:20px;
+}
+
+input, select{
+  width:100%;
+  padding:12px;
+  margin:8px 0;
+  border-radius:10px;
+  border:none;
+  font-size:15px;
+}
+
+.btn{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border:none;
+  border-radius:10px;
+  font-size:15px;
+  cursor:pointer;
+  color:white;
+}
+
+.add-btn{ background:#43a047; }
+.view-btn{ background:#1976d2; }
+.update-btn{ background:#f9a825; }
+
+.btn:hover{ opacity:0.9; }
+
+table{
+  width:100%;
+  margin-top:20px;
+  border-collapse:collapse;
+  display:none;
+  background:rgba(255,255,255,0.2);
+}
+
+th,td{
+  padding:10px;
+  text-align:center;
+}
+
+th{
+  background:#2e7d32;
+}
+
+tr:nth-child(even){
+  background:rgba(255,255,255,0.1);
+}
+
+.action-btn{
+  padding:5px 10px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  color:white;
+}
+
+.edit{ background:#0288d1; }
+.delete{ background:#d32f2f; }
+
+.nav{
+  display:flex;
+  justify-content:space-between;
+  margin-top:20px;
+}
+
+.nav button{
+  padding:8px 20px;
+  border:none;
+  border-radius:20px;
+  background:#424242;
+  color:white;
+  cursor:pointer;
+}
+
+.nav button:hover{
+  background:black;
+}
+
+#message{
+  text-align:center;
+  margin-top:10px;
+  font-weight:bold;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+<h2>🌾 Crop Management</h2>
+
+<input type="text" id="crop" placeholder="Crop Name">
+
+<select id="season">
+<option value="">Select Season</option>
+<option>Kharif</option>
+<option>Rabi</option>
+<option>Zaid</option>
+<option>Kuruvai</option>
+<option>Samba</option>
+<option>Navarai</option>
+</select>
+
+<input type="number" id="yield" placeholder="Yield (kg)">
+
+<button class="btn add-btn" onclick="addCrop()">Add Crop</button>
+<button class="btn update-btn" onclick="updateCrop()" id="updateBtn" style="display:none;">Update Crop</button>
+<button class="btn view-btn" onclick="viewCrops()">View Crops</button>
+
+<div id="message"></div>
+
+<table id="cropTable">
+<thead>
+<tr>
+<th>ID</th>
+<th>Crop</th>
+<th>Season</th>
+<th>Yield</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+
+<div class="nav">
+<button onclick="goPrevious()">◀ Previous</button>
+<button onclick="goNext()">Next ▶</button>
+</div>
+
+</div>
+
+<script>
+
+const API="http://localhost:5000";
+let editId=null;
+
+async function addCrop(){
+const crop=document.getElementById("crop").value.trim();
+const season=document.getElementById("season").value;
+const yieldValue=document.getElementById("yield").value;
+
+if(!crop||!season||!yieldValue){
+showMessage("All fields required!","red");
+return;
+}
+
+const res=await fetch(`${API}/add-crop`,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({crop,season,yield:yieldValue})
+});
+
+const data=await res.json();
+showMessage(data.message,"lightgreen");
+clearForm();
+}
+
+async function viewCrops(){
+const res=await fetch(`${API}/crops`);
+const crops=await res.json();
+
+const table=document.getElementById("cropTable");
+const body=document.getElementById("tableBody");
+body.innerHTML="";
+
+crops.forEach(c=>{
+body.innerHTML+=`
+<tr>
+<td>${c.id}</td>
+<td>${c.crop}</td>
+<td>${c.season}</td>
+<td>${c.yield}</td>
+<td>
+<button class="action-btn edit" onclick="editCrop('${c.id}','${c.crop}','${c.season}','${c.yield}')">Edit</button>
+<button class="action-btn delete" onclick="deleteCrop('${c.id}')">Delete</button>
+</td>
+</tr>
+`;
+});
+
+table.style.display="table";
+}
+
+function editCrop(id,crop,season,yieldValue){
+editId=id;
+document.getElementById("crop").value=crop;
+document.getElementById("season").value=season;
+document.getElementById("yield").value=yieldValue;
+document.getElementById("updateBtn").style.display="block";
+}
+
+async function updateCrop(){
+const crop=document.getElementById("crop").value;
+const season=document.getElementById("season").value;
+const yieldValue=document.getElementById("yield").value;
+
+await fetch(`${API}/update-crop/${editId}`,{
+method:"PUT",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({crop,season,yield:yieldValue})
+});
+
+showMessage("Crop updated successfully","yellow");
+clearForm();
+viewCrops();
+document.getElementById("updateBtn").style.display="none";
+}
+
+async function deleteCrop(id){
+await fetch(`${API}/delete-crop/${id}`,{method:"DELETE"});
+viewCrops();
+}
+
+function clearForm(){
+document.getElementById("crop").value="";
+document.getElementById("season").value="";
+document.getElementById("yield").value="";
+editId=null;
+}
+
+function showMessage(msg,color){
+const m=document.getElementById("message");
+m.innerText=msg;
+m.style.color=color;
+}
+
+function goPrevious(){
+window.location.href="index.html";
+}
+
+function goNext(){
+window.location.href="fertilizer.html";
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fertilizer Dashboard 🌱</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+  <style>
+    body{
+      margin:0;
+      font-family:'Roboto', sans-serif;
+      background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('images/fertilizer.jpg');
+      background-size: cover;
+      background-position: center;
+      color:#fff;
+      padding:20px;
+    }
+
+    h1{
+      text-align:center;
+      margin-bottom:10px;
+      color:#fff;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+    }
+
+    /* 🔥 Navigation Buttons */
+    .nav-buttons{
+      display:flex;
+      justify-content:space-between;
+      margin-bottom:20px;
+    }
+
+    .nav-buttons button{
+      background:rgba(255,255,255,0.2);
+      backdrop-filter:blur(6px);
+      color:white;
+      padding:6px 15px;
+      border-radius:20px;
+      font-size:13px;
+      border:none;
+      cursor:pointer;
+      transition:0.3s;
+    }
+
+    .nav-buttons button:hover{
+      background:#43a047;
+    }
+
+    #addForm{
+      display:flex;
+      gap:10px;
+      margin-bottom:20px;
+      flex-wrap:wrap;
+      background:rgba(255,255,255,0.1);
+      padding:15px;
+      border-radius:12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    }
+
+    #addForm select, #addForm input, #addForm button{
+      padding:10px;
+      border-radius:8px;
+      border:none;
+      font-size:14px;
+    }
+
+    #addForm select, #addForm input{flex:1;}
+
+    #addForm button{
+      background:#43a047;
+      color:white;
+      cursor:pointer;
+      transition: 0.3s;
+    }
+
+    #addForm button:hover{background:#2e7d32;}
+
+    #fertilizerList{
+      display:grid;
+      grid-template-columns: repeat(auto-fill,minmax(250px,1fr));
+      gap:15px;
+    }
+
+    .card{
+      background:rgba(255,255,255,0.1);
+      padding:15px;
+      border-radius:12px;
+      box-shadow:0 8px 20px rgba(0,0,0,0.5);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      transition: transform 0.3s;
+      position:relative;
+      text-align:center;
+    }
+
+    .card:hover{ transform: translateY(-5px);}
+
+    .card.low-stock::after{
+      content:'LOW STOCK!';
+      position:absolute;
+      top:10px;
+      right:10px;
+      background:red;
+      color:white;
+      padding:5px 8px;
+      font-size:12px;
+      border-radius:5px;
+      font-weight:bold;
+    }
+
+    .card img{ width:80px; margin-bottom:10px;}
+    .card h3{ margin:5px 0;}
+    .card p{ margin:3px 0; font-size:14px;}
+
+    .card button{
+      margin-top:5px;
+      width:100%;
+      background:#43a047;
+      border:none;
+      color:white;
+      padding:8px;
+      border-radius:8px;
+      cursor:pointer;
+      transition:0.3s;
+    }
+
+    .card button:hover{background:#2e7d32;}
+
+    .card .delete-btn{background:#e53935;}
+    .card .delete-btn:hover{background:#b71c1c;}
+
+  </style>
+</head>
+
+<body>
+
+<h1>🌱 Fertilizer Dashboard</h1>
+
+<!-- 🔥 Navigation Buttons -->
+<div class="nav-buttons">
+  <button onclick="goPrevious()">◀ Previous</button>
+  <button onclick="goNext()">Next ▶</button>
+</div>
+
+<div id="addForm">
+  <select id="ftype" onchange="populateNames()">
+    <option value="" disabled selected>Select Type</option>
+    <option value="Chemical">Chemical</option>
+    <option value="Organic">Organic</option>
+  </select>
+
+  <select id="fname">
+    <option value="" disabled selected>Select Fertilizer</option>
+  </select>
+
+  <input type="number" id="fqty" placeholder="Quantity">
+  <input type="date" id="fdate">
+
+  <button onclick="addFertilizer()">Add Fertilizer</button>
+</div>
+
+<div id="fertilizerList"></div>
+
+<script>
+
+const API = "http://localhost:5000";
+
+/* 🔥 Navigation Functions */
+function goPrevious(){
+  window.location.href = "crop.html";
+}
+
+function goNext(){
+  window.location.href = "irrigation.html";
+}
+
+// Fertilizer lists by type
+const fertilizersByType = {
+  Chemical: ["Urea","DAP","NPK","Potash","Ammonium Sulphate"],
+  Organic: ["Compost","Vermicompost","Cow Manure","Bone Meal","Rock Phosphate"]
+};
+
+function getImage(type){
+  if(type === "Organic") return "images/organic.png";
+  if(type === "Chemical") return "images/chemical.png";
+  return "images/chemical.png";
+}
+
+function populateNames(){
+  const type = document.getElementById("ftype").value;
+  const nameSelect = document.getElementById("fname");
+  nameSelect.innerHTML = `<option value="" disabled selected>Select Fertilizer</option>`;
+  fertilizersByType[type].forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    nameSelect.appendChild(opt);
+  });
+}
+
+async function loadFertilizers(){
+  const res = await fetch(`${API}/fertilizers`);
+  const data = await res.json();
+  const container = document.getElementById("fertilizerList");
+  container.innerHTML = "";
+
+  data.forEach(f => {
+    const div = document.createElement("div");
+    div.className = "card" + (f.quantity < 10 ? " low-stock" : "");
+    div.innerHTML = `
+      <img src="${getImage(f.type)}" alt="${f.type} fertilizer"/>
+      <h3>${f.fertName}</h3>
+      <p>Type: ${f.type}</p>
+      <p>Quantity: ${f.quantity}</p>
+      <p>Application Date: ${f.appDate}</p>
+      <button onclick="updateQuantity(${f.id}, ${f.quantity})">Update Quantity</button>
+      <button class="delete-btn" onclick="deleteFertilizer(${f.id})">Delete</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+async function addFertilizer(){
+  const ftype = document.getElementById("ftype").value;
+  const fnameSelect = document.getElementById("fname");
+  const fertName = fnameSelect.value;
+  const quantity = parseInt(document.getElementById("fqty").value);
+  const appDate = document.getElementById("fdate").value;
+
+  if(!ftype || !fertName || !quantity || !appDate){
+    alert("Please fill all fields!");
+    return;
+  }
+
+  await fetch(`${API}/add-fertilizer`, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({fertName, type:ftype, quantity, appDate})
+  });
+
+  document.getElementById("ftype").value = "";
+  fnameSelect.innerHTML = `<option value="" disabled selected>Select Fertilizer</option>`;
+  document.getElementById("fqty").value = "";
+  document.getElementById("fdate").value = "";
+
+  loadFertilizers();
+}
+
+async function updateQuantity(id, currentQty){
+  const qty = prompt("Enter new quantity:", currentQty);
+  if(qty != null){
+    await fetch(`${API}/update-fertilizer/${id}`, {
+      method:"PUT",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({quantity:parseInt(qty)})
+    });
+    loadFertilizers();
+  }
+}
+
+async function deleteFertilizer(id){
+  if(confirm("Are you sure to delete this fertilizer?")){
+    await fetch(`${API}/delete-fertilizer/${id}`, {method:"DELETE"});
+    loadFertilizers();
+  }
+}
+
+loadFertilizers();
+setInterval(loadFertilizers, 5000);
+
+</script>
+
+</body>
+</html>
