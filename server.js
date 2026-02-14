@@ -118,7 +118,6 @@ app.delete("/delete-activity/:id", (req, res) => {
   activity = activity.filter(a => a.id != req.params.id);
   res.json({ message: "Activity deleted successfully!" });
 });
-
 // ================== SERVER START ==================
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
