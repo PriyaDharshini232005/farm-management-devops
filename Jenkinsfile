@@ -2,35 +2,26 @@ pipeline {
     agent any
 
     environment {
-        FRONTEND_IMAGE = "farm-frontend"
-        BACKEND_IMAGE = "farm-backend"
+        IMAGE_NAME = "farm-app"
     }
 
     stages {
 
-        stage('Build Backend Docker') {
+        stage('Build Docker Image') {
             steps {
-                dir('backend') {
-                    bat "docker build -t %BACKEND_IMAGE% ."
-                }
+                bat "docker build -t %IMAGE_NAME% ."
             }
         }
 
-        stage('Build Frontend Docker') {
+        stage('Stop Old Container') {
             steps {
-                dir('frontend') {
-                    bat "docker build -t %FRONTEND_IMAGE% ."
-                }
+                bat "docker rm -f farm-app || exit 0"
             }
         }
 
-        stage('Deploy Containers') {
+        stage('Run Container') {
             steps {
-                bat "docker rm -f farm-backend || exit 0"
-                bat "docker rm -f farm-frontend || exit 0"
-
-                bat "docker run -d -p 5000:5000 --name farm-backend %BACKEND_IMAGE%"
-                bat "docker run -d -p 3001:3000 --name farm-frontend %FRONTEND_IMAGE%"
+                bat "docker run -d -p 5000:5000 --name farm-app %IMAGE_NAME%"
             }
         }
     }
