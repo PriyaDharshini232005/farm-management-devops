@@ -1,19 +1,19 @@
-# Use Node.js 21 official image
+# Use Node.js 21
 FROM node:21
 
 # Set working directory inside container
 WORKDIR /app
 
-# Copy package.json and package-lock.json (if exists)
+# Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install backend dependencies
 RUN npm install
 
-# Copy all project files
+# Copy all project files (backend + frontend)
 COPY . .
 
-# Expose the port your server uses
+# Expose port
 EXPOSE 5000
 
 # Start the backend server
