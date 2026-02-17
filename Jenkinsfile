@@ -3,12 +3,27 @@ pipeline {
 
     environment {
         IMAGE_NAME = "farm-app"
+        SONAR_HOST = "http://localhost:9000"
+        // Updated with your new token from the photo
+        SONAR_TOKEN = "sqp_0f50a9cbe21f67e988452a7443d3250b4f43837f" 
     }
 
     stages {
         stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/PriyaDharshini232005/farm-management-devops.git'
+            }
+        }
+
+        stage('SonarQube Scan') {
+            steps {
+                bat """
+                "C:\\sonar-scanner\\bin\\sonar-scanner.bat" ^
+                -Dsonar.projectKey=farm_system ^
+                -Dsonar.sources=. ^
+                -Dsonar.host.url=%SONAR_HOST% ^
+                -Dsonar.token=%SONAR_TOKEN%
+                """
             }
         }
 
@@ -29,12 +44,6 @@ pipeline {
             steps {
                 bat "docker run -d -p 5000:5000 --name farm-app %IMAGE_NAME%"
             }
-        }
-    }
-
-    post {
-        always {
-            echo 'Pipeline finished — SonarQube skipped to fix the failure.'
         }
     }
 }
