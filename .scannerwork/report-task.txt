@@ -1,0 +1,6 @@
+projectKey=farm_system
+serverUrl=http://localhost:9000
+serverVersion=26.2.0.119303
+dashboardUrl=http://localhost:9000/dashboard?id=farm_system
+ceTaskId=5587b3ae-16ad-42ac-97ea-7c752e8774dc
+ceTaskUrl=http://localhost:9000/api/ce/task?id=5587b3ae-16ad-42ac-97ea-7c752e8774dc
