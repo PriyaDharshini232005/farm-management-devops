@@ -1,13 +1,11 @@
 pipeline {
     agent any
-
-    environment {
-        IMAGE_NAME = "farm-app"
-        SONAR_HOST = "http://host.docker.internal:9000"
-        // Updated with your new token from the photo
-        SONAR_TOKEN = "sqp_0f50a9cbe21f67e988452a7443d3250b4f43837f" 
-    }
-
+    
+environment {
+    IMAGE_NAME = "farm-app"
+    SONAR_HOST = "http://localhost:9000"
+    SONAR_TOKEN = "sqp_0f50a9cbe21f67e988452a7443d3250b4f43837f"
+}
     stages {
         stage('Checkout Code') {
             steps {
