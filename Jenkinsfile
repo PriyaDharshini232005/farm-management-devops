@@ -4,7 +4,7 @@ pipeline {
 environment {
     IMAGE_NAME = "farm-app"
     SONAR_HOST = "http://localhost:9000"
-    SONAR_TOKEN = "sqp_0f50a9cbe21f67e988452a7443d3250b4f43837f"
+    SONAR_TOKEN = "sqp_b3d39db48ea9589b603c409e81c48b95e7140389"
 }
     stages {
         stage('Checkout Code') {
